@@ -6,7 +6,6 @@
 
 extern void (*interrupt_handler_pointers[256])();
 
-// Struct for an individual IDT entry
 struct idt_entry {
   unsigned short int offset_low;
   unsigned short int selector;
@@ -15,20 +14,17 @@ struct idt_entry {
   unsigned short int offset_high;
 } __attribute__((packed));
 
-// Struct for the IDT pointer
 struct idt_ptr {
   unsigned short int limit;
   unsigned int base;
 } __attribute__((packed));
 
-// The actual IDT array and its pointer
 struct idt_entry idt[256];
 struct idt_ptr idt_ptr_variable;
 
-// Assembly function to load the IDT
+// from interrupt_handler_s.s
 extern void lidt_function_name(void);
 
-// Function to set up an IDT entry
 void idt_set_gate(unsigned char num, unsigned int base, unsigned short int sel, unsigned char flags) {
   idt[num].offset_low  = base & 0xFFFF;
   idt[num].offset_high = (base >> 16) & 0xFFFF;
@@ -37,23 +33,17 @@ void idt_set_gate(unsigned char num, unsigned int base, unsigned short int sel, 
   idt[num].flags       = flags;
 }
 
-// Main function to initialize and load the IDT
 void idt_init() {
-  // Populate IDT pointer
   idt_ptr_variable.limit = (sizeof(struct idt_entry) * 256) - 1;
   idt_ptr_variable.base = (unsigned int)&idt;
 
-  // Set up a few gates, for example, for the interrupt handlers you defined in assembly
   // The selector (0x08) is the common kernel code segment selector in a GDT
   // The flags (0x8E) indicate a 32-bit interrupt gate (P=1, DPL=0, S=0, Type=1110b)
-
   for (int i = 0; i < 256; i++) {
-    // Use the function pointer array to get the address of the correct handler.
     unsigned int handler_address = (unsigned int)interrupt_handler_pointers[i];
     idt_set_gate(i, handler_address, 0x08, 0x8E);
   }
 
-  // Load the IDT using the assembly function
   lidt_function_name();
 }
 
@@ -82,7 +72,7 @@ struct cpu_state {
   unsigned int edi;
   unsigned int esi;
   unsigned int ebp;
-  unsigned int esp_dummy; // Not a real register, but `pushad` pushes ESP
+  unsigned int esp_dummy; // cant be used since stack have changed
   unsigned int ebx;
   unsigned int edx;
   unsigned int ecx;
@@ -111,14 +101,5 @@ void interrupt_handler(struct cpu_state registers, unsigned int interrupt_number
     }
     outb(0x20, 0x20);       // Always EOI to master
   }
-
-  /*
-    if (interrupt_number != 32) {
-    do {
-    const char *ali = "Ali. ";
-    fb_write_size(ali, 5);
-    } while(0);
-    }
-  */
 
 }
