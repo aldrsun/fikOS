@@ -1,4 +1,4 @@
-;; addr, data
+;; arg: addr, data
 global outb
 outb:
     mov dx, [esp + 4]
@@ -7,7 +7,7 @@ outb:
 	out dx, al
 	ret
 
-;; addr
+;; arg: addr
 global inb
 inb:
 	mov dx, [esp + 4]
